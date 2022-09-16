@@ -1,0 +1,24 @@
+specVersion: 0.0.4
+schema:
+  file: solidity-empty.schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: ownable
+    network: localhost
+    source:
+      address: "0x55596094FdA945B93308B24236f26cbEAF359b45"
+      abi: Ownable
+      startBlock: 472
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Ownable
+      abis:
+        - name: Ownable
+          file: node_modules/@openzeppelin/contracts/build/contracts/Ownable.json
+      eventHandlers:
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+      file: ownable/ownable.wasm
