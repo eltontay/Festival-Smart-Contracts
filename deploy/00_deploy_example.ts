@@ -10,7 +10,7 @@ const migrate: DeployFunction = async ({ getNamedAccounts, deployments: { deploy
     process.exit(1);
   }
 
-  await deploy('FestivalNFT', {
+  await deploy('FestivalToken', {
     from: deployer,
     args: [],
     log: true,
