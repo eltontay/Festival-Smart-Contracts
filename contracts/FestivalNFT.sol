@@ -3,35 +3,30 @@
 
 pragma solidity ^0.8.9;
 
-// Removed opensea, reserves, whitelist, royalty
+// Removed opensea, reserves, whitelist, royalty, freeze, batch
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Pausable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "./library/token/ERC721/extensions/ERC721Freezable.sol";
 import "./library/token/ERC721/extensions/ERC721MintPausable.sol";
-import "./library/token/ERC721/extensions/ERC721Batch.sol";
 // Additional import
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./FestivalToken.sol";
 
 contract FestivalNFT is
   ERC721Enumerable,
   ERC721Burnable,
   ERC721Pausable,
-  ERC721Freezable,
   ERC721MintPausable,
-  ERC721Batch,
   Ownable,
   ReentrancyGuard
 {
   //////////////////////////////////////////////////////////////////
   // CONFIGURATION                                                //
   //////////////////////////////////////////////////////////////////
-  uint256 public constant PRICE = 10; // Price per Festival NFT
-  uint256 public constant MAX_PER_TX = 5; // Limiting to 5 for family purchase of Festival NFTs
-  uint256 public constant MAX_SUPPLY = 1000; // Total amount of Festival NFTs
+  uint256 public constant PRICE = 10 * 10 ** 18; // Price per Festival NFT, set at 10 FTK
+  uint256 public constant MAX_PER_TX = 5; // Limiting to 5 for family purchase of FNFTs
+  uint256 public constant MAX_SUPPLY = 1000; // Total amount of FNFTs
 
   //////////////////////////////////////////////////////////////////
   // TOKEN STORAGE                                                //
@@ -61,7 +56,6 @@ contract FestivalNFT is
 
   bool private monetisation = false; // default monetisation (commision) set to false
   uint256 private commission = 0; // default commission value set to 0
-  address[] private buyers; // list of buyers
   uint256[] private ticketsOnSale; // list of tickets for sale
   mapping(address => uint256[]) private _purchasedTickets; // tracking specific address to tickets
   mapping(uint256 => TicketDetails) private _ticketDetails; // mapping structure of ticket to each ticket
@@ -72,11 +66,10 @@ contract FestivalNFT is
     string memory name_,
     string memory symbol_,
     string memory baseTokenURI_,
-    address payable wallet_,
     FestivalToken token_
   ) ERC721(name_, symbol_) {
     _baseTokenURI = baseTokenURI_;
-    _organiser = wallet_;
+    _organiser = payable(_msgSender());
     _token = token_;
   }
 
@@ -84,7 +77,7 @@ contract FestivalNFT is
   // CORE FUNCTIONS                                               //
   //////////////////////////////////////////////////////////////////
 
-  function setBaseURI(string memory baseTokenURI_) public onlyOwner whenURINotFrozen {
+  function setBaseURI(string memory baseTokenURI_) public onlyOwner  {
     _baseTokenURI = baseTokenURI_;
   }
 
@@ -109,7 +102,7 @@ contract FestivalNFT is
     address from,
     address to,
     uint256 tokenId
-  ) internal override(ERC721, ERC721Freezable) {
+  ) internal override(ERC721) {
     super._afterTokenTransfer(from, to, tokenId);
   }
 
@@ -124,8 +117,9 @@ contract FestivalNFT is
   function publicMint(uint256 count) public payable nonReentrant {
     require(_publicSaleOpen, "Public sale not active");
     require(_tokenId + count <= MAX_SUPPLY, "Exceeds max supply");
-    require(count < MAX_PER_TX, "Exceeds max per transaction");
-    _token.transferFrom(_msgSender(), _organiser, count * PRICE); // Error will throw if insufficient funds
+    require(count <= MAX_PER_TX, "Exceeds max per transaction");
+    require((getNumTicketsOfBuyer(_msgSender()) + count) <= MAX_PER_TX, "Exceeds maximum public minting");
+    _token.transferFrom(_msgSender(),_organiser, count * PRICE); // Error will throw if insufficient funds
 
     for (uint256 i; i < count; i++) {
       _mint(_msgSender(), ++_tokenId);
@@ -159,9 +153,6 @@ contract FestivalNFT is
     _burn(tokenId);
   }
 
-  function freeze() public onlyOwner {
-    super._freeze();
-  }
 
   //////////////////////////////////////////////////////////////////
   // Pausable & MintPausable                                      //
@@ -192,7 +183,6 @@ contract FestivalNFT is
       interfaceId == type(Ownable).interfaceId ||
       interfaceId == type(ERC721Burnable).interfaceId ||
       interfaceId == type(ERC721Enumerable).interfaceId ||
-      interfaceId == type(ERC721Freezable).interfaceId ||
       interfaceId == type(ERC721MintPausable).interfaceId ||
       super.supportsInterface(interfaceId);
   }
@@ -206,14 +196,14 @@ contract FestivalNFT is
   //////////////////////////////////////////////////////////////////
 
   /*
-    Modifier - Validate that the selling price does not exceed 110% more than the 
+    Modifier - Validate that the selling price does not exceed 110% (1.1x) more than the
     current price.
   */
 
   modifier checkSellingPrice(uint256 ticketId, uint256 sellingPrice) {
     uint256 currentPrice = _ticketDetails[ticketId].currentPrice;
     require(
-      currentPrice + SafeMath.div(SafeMath.mul(currentPrice, 110), 100) > sellingPrice,
+      sellingPrice <= ((currentPrice * 110) / 100),
       "Re-selling price is more than 110%"
     );
     _;
@@ -338,7 +328,7 @@ contract FestivalNFT is
     address payable seller = payable(_ticketDetails[ticketId].ticketOwner);
     address payable buyer = payable(_msgSender());
     uint256 sellingPrice = _ticketDetails[ticketId].sellingPrice;
-    uint256 commissionPrice = SafeMath.div(SafeMath.mul(sellingPrice, commission), 100);
+    uint256 commissionPrice = (sellingPrice * commission) / 100;
     // Transferring of Tokens
     _token.transferFrom(buyer, seller, sellingPrice - commissionPrice);
     if (commissionPrice > 0) {
@@ -350,6 +340,10 @@ contract FestivalNFT is
     removeTicketOnSale(ticketId);
     removeTicketFromPurchased(seller, ticketId);
     _purchasedTickets[buyer].push(_tokenId);
+    // Adjust ticket
+    _ticketDetails[ticketId].ticketOwner = _msgSender();
+    _ticketDetails[ticketId].currentPrice = sellingPrice;
+    _ticketDetails[ticketId].forSale = false;
   }
 
   //////////////////////////////////////////////////////////////////
@@ -406,4 +400,32 @@ contract FestivalNFT is
   //////////////////////////////////////////////////////////////////
   // Getter Functions                                             //
   //////////////////////////////////////////////////////////////////
+
+  function getOwner(uint256 ticketId) public view returns (address) {
+    return _ticketDetails[ticketId].ticketOwner;
+  }
+
+  function getCurrentPrice(uint256 ticketId) public view returns (uint256) {
+    return _ticketDetails[ticketId].currentPrice;
+  }
+
+  function getSellingPrice(uint256 ticketId) public view returns (uint256) {
+    return _ticketDetails[ticketId].sellingPrice;
+  }
+
+  function getForSale(uint256 ticketId) public view returns (bool) {
+    return _ticketDetails[ticketId].forSale;
+  }
+
+  function getTicketsOfBuyer(address buyer) public view returns (uint256[] memory) {
+    return _purchasedTickets[buyer];
+  }
+
+  function getNumTicketsOfBuyer(address buyer) public view returns(uint256) {
+    return _purchasedTickets[buyer].length;
+  }
+
+  function getTicketsOnSale() public view returns (uint256[] memory) {
+    return ticketsOnSale;
+  }
 }
