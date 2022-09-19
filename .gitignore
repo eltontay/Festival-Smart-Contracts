@@ -58,3 +58,4 @@ typechain
 typechain-types
 graphql.ts
 .secrets
+.env

@@ -58,7 +58,7 @@ contract FestivalNFT is
     uint256 sellingPrice;
     bool forSale;
   }
-  
+
   bool private monetisation = false; // default monetisation (commision) set to false
   uint256 private commission = 0; // default commission value set to 0
   address[] private buyers; // list of buyers
@@ -125,8 +125,8 @@ contract FestivalNFT is
     require(_publicSaleOpen, "Public sale not active");
     require(_tokenId + count <= MAX_SUPPLY, "Exceeds max supply");
     require(count < MAX_PER_TX, "Exceeds max per transaction");
-    _token.transferFrom(_msgSender(),_organiser,count * PRICE); // Error will throw if insufficient funds
-    
+    _token.transferFrom(_msgSender(), _organiser, count * PRICE); // Error will throw if insufficient funds
+
     for (uint256 i; i < count; i++) {
       _mint(_msgSender(), ++_tokenId);
       _purchasedTickets[_msgSender()].push(_tokenId); // mapping token id to buyer
@@ -137,7 +137,6 @@ contract FestivalNFT is
         forSale: false
       });
     }
-
   }
 
   //////////////////////////////////////////////////////////////////
@@ -188,13 +187,7 @@ contract FestivalNFT is
   // ERC165                                                       //
   //////////////////////////////////////////////////////////////////
 
-  function supportsInterface(bytes4 interfaceId)
-    public
-    view
-    virtual
-    override(ERC721, ERC721Enumerable)
-    returns (bool)
-  {
+  function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, ERC721Enumerable) returns (bool) {
     return
       interfaceId == type(Ownable).interfaceId ||
       interfaceId == type(ERC721Burnable).interfaceId ||
@@ -218,12 +211,12 @@ contract FestivalNFT is
   */
 
   modifier checkSellingPrice(uint256 ticketId, uint256 sellingPrice) {
-     uint256 currentPrice = _ticketDetails[ticketId].currentPrice;  
-     require(
-        currentPrice + SafeMath.div(SafeMath.mul(currentPrice,110), 100) > sellingPrice,
-        "Re-selling price is more than 110%"
+    uint256 currentPrice = _ticketDetails[ticketId].currentPrice;
+    require(
+      currentPrice + SafeMath.div(SafeMath.mul(currentPrice, 110), 100) > sellingPrice,
+      "Re-selling price is more than 110%"
     );
-    _;     
+    _;
   }
 
   /*
@@ -232,7 +225,7 @@ contract FestivalNFT is
 
   modifier checkTicketIsOwner(uint256 ticketId, address ticketOwner) {
     address realOwner = _ticketDetails[ticketId].ticketOwner;
-    require(realOwner == ticketOwner, "You are not the ticket owner.");    
+    require(realOwner == ticketOwner, "You are not the ticket owner.");
     _;
   }
 
@@ -242,7 +235,7 @@ contract FestivalNFT is
 
   modifier checkTicketIsNotOwner(uint256 ticketId, address ticketOwner) {
     address realOwner = _ticketDetails[ticketId].ticketOwner;
-    require(realOwner != ticketOwner, "You are the ticket owner.");    
+    require(realOwner != ticketOwner, "You are the ticket owner.");
     _;
   }
 
@@ -263,7 +256,6 @@ contract FestivalNFT is
     require(!_ticketDetails[ticketId].forSale, "Ticket is on sale.");
     _;
   }
-
 
   /*
     Modifier - Check if value is sufficient for ticket purchase
@@ -286,9 +278,10 @@ contract FestivalNFT is
     - Checks ticket is not on sale
   */
 
-  function setListing(uint256 ticketId, uint256 sellingPrice_) public  
-    checkSellingPrice(ticketId,sellingPrice_)
-    checkTicketIsOwner(ticketId,_msgSender())
+  function setListing(uint256 ticketId, uint256 sellingPrice_)
+    public
+    checkSellingPrice(ticketId, sellingPrice_)
+    checkTicketIsOwner(ticketId, _msgSender())
     checkTicketNotOnSale(ticketId)
   {
     _ticketDetails[ticketId].sellingPrice = sellingPrice_;
@@ -302,8 +295,9 @@ contract FestivalNFT is
     - Checks if ticket is on sale
   */
 
-  function removeListing(uint256 ticketId) public 
-    checkTicketIsOwner(ticketId,_msgSender())
+  function removeListing(uint256 ticketId)
+    public
+    checkTicketIsOwner(ticketId, _msgSender())
     checkTicketOnSale(ticketId)
   {
     _ticketDetails[ticketId].sellingPrice = 0;
@@ -318,14 +312,14 @@ contract FestivalNFT is
     - Checks if ticket is on sale
   */
 
-  function adjustListing(uint256 ticketId, uint256 sellingPrice_) public 
-    checkSellingPrice(ticketId,sellingPrice_)
-    checkTicketIsOwner(ticketId,_msgSender())
+  function adjustListing(uint256 ticketId, uint256 sellingPrice_)
+    public
+    checkSellingPrice(ticketId, sellingPrice_)
+    checkTicketIsOwner(ticketId, _msgSender())
     checkTicketOnSale(ticketId)
   {
     _ticketDetails[ticketId].sellingPrice = sellingPrice_;
   }
-
 
   /*
     Buy ticket listing on secondary market.
@@ -334,25 +328,27 @@ contract FestivalNFT is
     - Checks if ticket is on sale
   */
 
-  function purchaseListing(uint256 ticketId, uint256 value) public payable
-    checkSufficientValue(ticketId,value)
-    checkTicketIsNotOwner(ticketId,_msgSender())
+  function purchaseListing(uint256 ticketId, uint256 value)
+    public
+    payable
+    checkSufficientValue(ticketId, value)
+    checkTicketIsNotOwner(ticketId, _msgSender())
     checkTicketOnSale(ticketId)
   {
     address payable seller = payable(_ticketDetails[ticketId].ticketOwner);
     address payable buyer = payable(_msgSender());
     uint256 sellingPrice = _ticketDetails[ticketId].sellingPrice;
-    uint256 commissionPrice = SafeMath.div(SafeMath.mul(sellingPrice,commission),100);
+    uint256 commissionPrice = SafeMath.div(SafeMath.mul(sellingPrice, commission), 100);
     // Transferring of Tokens
-    _token.transferFrom(buyer,seller,sellingPrice-commissionPrice);
+    _token.transferFrom(buyer, seller, sellingPrice - commissionPrice);
     if (commissionPrice > 0) {
-      _token.transferFrom(buyer,_organiser,commissionPrice);      
+      _token.transferFrom(buyer, _organiser, commissionPrice);
     }
     // Transferring of NFT
-    transferFrom(seller,buyer,ticketId);
+    transferFrom(seller, buyer, ticketId);
     // Adjusting lists
     removeTicketOnSale(ticketId);
-    removeTicketFromPurchased(seller,ticketId);
+    removeTicketFromPurchased(seller, ticketId);
     _purchasedTickets[buyer].push(_tokenId);
   }
 
@@ -378,42 +374,36 @@ contract FestivalNFT is
   */
 
   function removeTicketOnSale(uint256 ticketId) internal {
-      uint256 numOfTickets = ticketsOnSale.length;
+    uint256 numOfTickets = ticketsOnSale.length;
 
-      for (uint256 i = 0; i < numOfTickets; i++) {
-          if (ticketsOnSale[i] == ticketId) {
-              for (uint256 j = i + 1; j < numOfTickets; j++) {
-                  ticketsOnSale[j - 1] = ticketsOnSale[j];
-              }
-              ticketsOnSale.pop();
-          }
+    for (uint256 i = 0; i < numOfTickets; i++) {
+      if (ticketsOnSale[i] == ticketId) {
+        for (uint256 j = i + 1; j < numOfTickets; j++) {
+          ticketsOnSale[j - 1] = ticketsOnSale[j];
+        }
+        ticketsOnSale.pop();
       }
+    }
   }
 
   /*
     Internal - Remove ticket from purchased list
   */
-  
-   
-  function removeTicketFromPurchased(address person, uint256 ticketId) internal {
-      uint256 numOfTickets = _purchasedTickets[person].length;
 
-      for (uint256 i = 0; i < numOfTickets; i++) {
-          if (_purchasedTickets[person][i] == ticketId) {
-              for (uint256 j = i + 1; j < numOfTickets; j++) {
-                  _purchasedTickets[person][j - 1] = _purchasedTickets[
-                      person
-                  ][j];
-              }
-              _purchasedTickets[person].pop();
-          }
+  function removeTicketFromPurchased(address person, uint256 ticketId) internal {
+    uint256 numOfTickets = _purchasedTickets[person].length;
+
+    for (uint256 i = 0; i < numOfTickets; i++) {
+      if (_purchasedTickets[person][i] == ticketId) {
+        for (uint256 j = i + 1; j < numOfTickets; j++) {
+          _purchasedTickets[person][j - 1] = _purchasedTickets[person][j];
+        }
+        _purchasedTickets[person].pop();
       }
+    }
   }
 
   //////////////////////////////////////////////////////////////////
   // Getter Functions                                             //
   //////////////////////////////////////////////////////////////////
-
-
-
 }
