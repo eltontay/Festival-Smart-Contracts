@@ -259,8 +259,7 @@ contract FestivalNFT is
   */
 
   modifier checkSufficientValue(uint256 ticketId, uint256 value) {
-    uint256 sellingPrice = _ticketDetails[ticketId].sellingPrice;
-    require(value >= sellingPrice, "Insufficient token for purchase.");
+    require(value >= _ticketDetails[ticketId].sellingPrice, "Insufficient token for purchase.");
     _;
   }
 
@@ -345,23 +344,23 @@ contract FestivalNFT is
     checkTicketOnSale(ticketId)
   {
     address seller = _ticketDetails[ticketId].ticketOwner;
-    address buyer = _msgSender();
     uint256 sellingPrice = _ticketDetails[ticketId].sellingPrice;
     uint256 commissionPrice = (sellingPrice * commission) / 100;
     // Transferring of Tokens
-    _token.transferFrom(buyer, seller, sellingPrice - commissionPrice);
+    _token.transferFrom(_msgSender(), seller, sellingPrice - commissionPrice);
     if (commissionPrice > 0) {
-      _token.transferFrom(buyer, _organiser, commissionPrice);
+      _token.transferFrom(_msgSender(), _organiser, commissionPrice);
     }
+
     // Transferring of NFT
-    transferFrom(_organiser, buyer, ticketId);
+    transferFrom(_organiser, _msgSender(), ticketId);
 
     // Adjust ticket details
-    _ticketDetails[ticketId].ticketOwner = buyer;
+    _ticketDetails[ticketId].ticketOwner = _msgSender();
     _ticketDetails[ticketId].currentPrice = sellingPrice;
     _ticketDetails[ticketId].forSale = false;
 
-    emit PurchaseListing(buyer,seller,sellingPrice,commissionPrice);
+    emit PurchaseListing(_msgSender(),seller,sellingPrice,commissionPrice);
   }
 
   //////////////////////////////////////////////////////////////////

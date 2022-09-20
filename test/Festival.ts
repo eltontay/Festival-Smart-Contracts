@@ -7,7 +7,7 @@ describe('Festival', function () {
   // and reset Hardhat Network to that snapshot in every test.
   async function deployLockFixture() {
     // Contracts are deployed using the first signer/account by default
-    const [organiser, buyer1, buyer2, buyer3] = await ethers.getSigners();
+    const [ organiser, buyer1, buyer2, buyer3] = await ethers.getSigners();
 
     // Deploying Festival Token
     const FestivalToken = await ethers.getContractFactory('FestivalToken');
@@ -15,7 +15,7 @@ describe('Festival', function () {
 
     // Deploying Festival NFT
     const FestivalNFT = await ethers.getContractFactory('FestivalNFT');
-    const festivalNFT = await FestivalNFT.deploy('FestivalNFT', 'FNFT', 'Link to NFT image', festivalToken.address);
+    const festivalNFT = await FestivalNFT.connect(organiser).deploy('FestivalNFT', 'FNFT', 'Link to NFT image', festivalToken.address);
 
     return { organiser, buyer1, buyer2, buyer3, festivalToken, festivalNFT };
   }
@@ -185,7 +185,7 @@ describe('Festival', function () {
       );
     });
 
-    it('Successful Purchase listing of 1 FNFT ', async function () {
+    it('Successful purchase listing of 1 FNFT ', async function () {
       const { organiser, buyer1, buyer2, buyer3, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
 
       await festivalToken.mint(buyer1.address, ethers.utils.parseUnits('1', 20)); // minting 100 FTK
@@ -204,165 +204,90 @@ describe('Festival', function () {
       // Listing 1 FNFT at 11 FTK
       await festivalNFT.connect(buyer1).setListing(1, ethers.utils.parseUnits('11', 18));
 
+      // Approving buyer2 to purchase
+      await festivalNFT.approve(buyer2.address,1)
+
       // Purchasing of 1 FNFT at 11 FTK
       await festivalNFT.connect(buyer2).purchaseListing(1, ethers.utils.parseUnits('11', 18));
 
-      // expect(await festivalNFT.getOwner(1)).to.equal(buyer2.address);
+      expect(await festivalNFT.balanceOf(buyer1.address)).to.equal(0);
+      expect(await festivalNFT.balanceOf(buyer2.address)).to.equal(1);
     });
   });
-  // it('Check BluejayTokenTest Minting', async function () {
-  //   const { bluejayTokenTest, oracle, vesting } = await loadFixture(
-  //     deployOneYearLockFixture
-  //   );
 
-  //   await bluejayTokenTest.initialize();
+  describe('Check Monetisation', function () {
+    it('Successful monetisation - 10%', async function () {
+      const { organiser, buyer1, buyer2, buyer3, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
 
-  //   await bluejayTokenTest.grantRole(
-  //     '0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6',
-  //     oracle.address
-  //   );
+      await festivalToken.mint(buyer1.address, ethers.utils.parseUnits('1', 20)); // minting 100 FTK
+      await festivalToken.mint(buyer2.address, ethers.utils.parseUnits('1', 20)); // minting 100 FTK
 
-  //   await bluejayTokenTest.mint(
-  //     vesting.address,
-  //     ethers.utils.parseUnits('1', 23)
-  //   ); // sending to Vesting contract 100,000 BLU
+      // Initialising public sale
+      await festivalNFT.startPublicSale();
+      await festivalNFT.monetise(10);
 
-  //   expect(await bluejayTokenTest.balanceOf(vesting.address)).to.equal(
-  //     ethers.utils.parseUnits('1', 23)
-  //   );
-  // });
+      // Approving buyer1 and buyer2 to transact in FTK
+      await festivalToken.connect(buyer1).approve(festivalNFT.address, festivalToken.totalSupply());
+      await festivalToken.connect(buyer2).approve(festivalNFT.address, festivalToken.totalSupply());
 
-  // describe('Check EBLU Initialisation', function () {
-  //   it('EBLU should be initialised', async function () {
-  //     const { eBLU } = await loadFixture(deployOneYearLockFixture);
+      // Minting 1 FNFT at 10 FTK
+      await festivalNFT.connect(buyer1).publicMint(1);
 
-  //     await eBLU.initialize();
+      // Listing 1 FNFT at 11 FTK
+      await festivalNFT.connect(buyer1).setListing(1, ethers.utils.parseUnits('10', 18));
 
-  //     expect(await eBLU.name()).to.equal('eBLU');
-  //   });
+      // Approving buyer2 to purchase
+      await festivalNFT.approve(buyer2.address,1)
 
-  //   it('Check EBLU Minting', async function () {
-  //     const { eBLU, em1, oracle, vesting } = await loadFixture(
-  //       deployOneYearLockFixture
-  //     );
+      // Purchasing of 1 FNFT at 10 FTK
+      await festivalNFT.connect(buyer2).purchaseListing(1, ethers.utils.parseUnits('10', 18));
 
-  //     await eBLU.initialize();
+      // Checking FTK balance of buyer1, should be 10% less of 10, note need to deduct the price of public mint
+      expect(await festivalToken.balanceOf(buyer1.address)).to.equal(
+        ethers.utils.parseUnits('99', 18)
+      );
 
-  //     await eBLU.mint(em1.address, ethers.utils.parseUnits('1', 23)); // sending to employee1 100,000 eBLU
+      // Checking FTK balance of buyer2
+      expect(await festivalToken.balanceOf(buyer2.address)).to.equal(
+        ethers.utils.parseUnits('90', 18)
+      );
+    });
 
-  //     expect(await eBLU.balanceOf(em1.address)).to.equal(
-  //       ethers.utils.parseUnits('1', 23)
-  //     );
-  //   });
-  // });
+        it('Successful monetisation - 10%', async function () {
+      const { organiser, buyer1, buyer2, buyer3, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
 
-  // describe('Check Vesting', function () {
-  //   it('Check Creation of Vesting Schedule', async function () {
-  //     const { bluejayTokenTest, vesting, eBLU, oracle, em1 } =
-  //       await loadFixture(deployOneYearLockFixture);
+      await festivalToken.mint(buyer1.address, ethers.utils.parseUnits('1', 20)); // minting 100 FTK
+      await festivalToken.mint(buyer2.address, ethers.utils.parseUnits('1', 20)); // minting 100 FTK
 
-  //     // Test 1 for bluejaytoken initialisation
+      // Initialising public sale
+      await festivalNFT.startPublicSale();
+      await festivalNFT.monetise(10);
 
-  //     await bluejayTokenTest.initialize();
+      // Approving buyer1 and buyer2 to transact in FTK
+      await festivalToken.connect(buyer1).approve(festivalNFT.address, festivalToken.totalSupply());
+      await festivalToken.connect(buyer2).approve(festivalNFT.address, festivalToken.totalSupply());
 
-  //     await bluejayTokenTest.grantRole(
-  //       '0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6',
-  //       oracle.address
-  //     );
+      // Minting 1 FNFT at 10 FTK
+      await festivalNFT.connect(buyer1).publicMint(1);
 
-  //     await bluejayTokenTest.mint(
-  //       vesting.address,
-  //       ethers.utils.parseUnits('1', 23)
-  //     ); // sending to Vesting contract 100,000 BLU
+      // Listing 1 FNFT at 11 FTK
+      await festivalNFT.connect(buyer1).setListing(1, ethers.utils.parseUnits('10', 18));
 
-  //     // Test 2 for eblu initialisation
+      // Approving buyer2 to purchase
+      await festivalNFT.approve(buyer2.address,1)
 
-  //     await eBLU.initialize();
+      // Purchasing of 1 FNFT at 10 FTK
+      await festivalNFT.connect(buyer2).purchaseListing(1, ethers.utils.parseUnits('10', 18));
 
-  //     await eBLU.mint(em1.address, ethers.utils.parseUnits('1', 23)); // sending to employee1 100,000 eBLU
+      // Checking FTK balance of buyer1, should be 10% less of 10, note need to deduct the price of public mint
+      expect(await festivalToken.balanceOf(buyer1.address)).to.equal(
+        ethers.utils.parseUnits('99', 18)
+      );
 
-  //     // Vesting testing creating schedule
-  //     await vesting.createVestingSchedule(
-  //       em1.address,
-  //       true,
-  //       ethers.utils.parseUnits('1', 23)
-  //     );
-  //   });
-
-  //   it('Check Correct Vesting Amount', async function () {
-  //     const { bluejayTokenTest, vesting, eBLU, oracle, em1 } =
-  //       await loadFixture(deployOneYearLockFixture);
-
-  //     // Test 1 for bluejaytoken initialisation
-
-  //     await bluejayTokenTest.initialize();
-
-  //     await bluejayTokenTest.grantRole(
-  //       '0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6',
-  //       oracle.address
-  //     );
-
-  //     await bluejayTokenTest.mint(
-  //       vesting.address,
-  //       ethers.utils.parseUnits('1', 23)
-  //     ); // sending to Vesting contract 100,000 BLU
-
-  //     // Test 2 for eblu initialisation
-
-  //     await eBLU.initialize();
-
-  //     await eBLU.mint(em1.address, ethers.utils.parseUnits('1', 23)); // sending to employee1 100,000 eBLU
-
-  //     // Vesting testing creating schedule
-  //     await vesting.createVestingSchedule(
-  //       em1.address,
-  //       true,
-  //       ethers.utils.parseUnits('1', 23)
-  //     );
-
-  //     const id = await vesting.computeVestingScheduleIdForAddressAndIndex(
-  //       em1.address,
-  //       0
-  //     );
-
-  //     expect(await vesting.computeRedemptionAmount(id)).to.equal(
-  //       ethers.utils.parseUnits('1', 21) // 1k BLU able to redeem
-  //     );
-  //   });
-
-  //   it('Check Redemption', async function () {
-  //     const { bluejayTokenTest, vesting, eBLU, oracle, em1 } =
-  //       await loadFixture(deployOneYearLockFixture);
-
-  //     // Test 1 for bluejaytoken initialisation
-
-  //     await bluejayTokenTest.initialize();
-
-  //     await bluejayTokenTest.grantRole(
-  //       '0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6',
-  //       oracle.address
-  //     );
-
-  //     await bluejayTokenTest.mint(
-  //       vesting.address,
-  //       ethers.utils.parseUnits('1', 23)
-  //     ); // sending to Vesting contract 100,000 BLU
-
-  //     // Test 2 for eblu initialisation
-
-  //     await eBLU.initialize();
-
-  //     await eBLU.mint(em1.address, ethers.utils.parseUnits('1', 23)); // sending to employee1 100,000 eBLU
-
-  //     // Vesting testing creating schedule
-  //     await vesting.createVestingSchedule(
-  //       em1.address,
-  //       true,
-  //       ethers.utils.parseUnits('1', 23)
-  //     );
-
-  //     await expect(vesting.redeem(em1.address))
-  //       .to.emit(vesting, 'Redeemed')
-  //       .withArgs(em1.address, ethers.utils.parseUnits('1', 21));
-  //   });
+      // Checking FTK balance of buyer2
+      expect(await festivalToken.balanceOf(buyer2.address)).to.equal(
+        ethers.utils.parseUnits('90', 18)
+      );
+    });
+  });
 });
