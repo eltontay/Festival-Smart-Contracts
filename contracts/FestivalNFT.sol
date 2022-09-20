@@ -56,9 +56,14 @@ contract FestivalNFT is
 
   bool private monetisation = false; // default monetisation (commision) set to false
   uint256 private commission = 0; // default commission value set to 0
-  uint256[] private ticketsOnSale; // list of tickets for sale
-  mapping(address => uint256[]) private _purchasedTickets; // tracking specific address to tickets
   mapping(uint256 => TicketDetails) private _ticketDetails; // mapping structure of ticket to each ticket
+
+  // events
+  event PublicMint(address buyer, uint256 ticketId);
+  event PurchaseListing(address buyer, address seller, uint256 sellingPrice, uint256 commissionPrice);
+  event SetListing(address owner, uint256 ticketId, uint256 sellingPrice);
+  event RemoveListing(address owner, uint256 ticketId);
+  event AdjustListing(address owner, uint256 ticketId, uint256 sellingPrice);
 
   FestivalToken private _token;
 
@@ -118,19 +123,21 @@ contract FestivalNFT is
     require(_publicSaleOpen, "Public sale not active");
     require(_tokenId + count <= MAX_SUPPLY, "Exceeds max supply");
     require(count <= MAX_PER_TX, "Exceeds max per transaction");
-    require((getNumTicketsOfBuyer(_msgSender()) + count) <= MAX_PER_TX, "Exceeds maximum public minting");
+    require(balanceOf(_msgSender()) + count <= MAX_PER_TX, "Exceeds maximum public minting");
     _token.transferFrom(_msgSender(),_organiser, count * PRICE); // Error will throw if insufficient funds
 
     for (uint256 i; i < count; i++) {
       _mint(_msgSender(), ++_tokenId);
-      _purchasedTickets[_msgSender()].push(_tokenId); // mapping token id to buyer
       _ticketDetails[_tokenId] = TicketDetails({ // initialise structure to ticket
         ticketOwner: _msgSender(),
         currentPrice: PRICE,
         sellingPrice: 0,
         forSale: false
       });
+      emit PublicMint(_msgSender(),_tokenId);
     }
+
+
   }
 
   //////////////////////////////////////////////////////////////////
@@ -274,9 +281,15 @@ contract FestivalNFT is
     checkTicketIsOwner(ticketId, _msgSender())
     checkTicketNotOnSale(ticketId)
   {
+    // Approving organiser
+    approve(_organiser,ticketId);
+    // Transferring of FNFT
+    transferFrom(_msgSender(),_organiser, ticketId);
+    // Setting ticket details
     _ticketDetails[ticketId].sellingPrice = sellingPrice_;
     _ticketDetails[ticketId].forSale = true;
-    ticketsOnSale.push(ticketId);
+
+    emit SetListing(_msgSender(),ticketId,sellingPrice_);
   }
 
   /*
@@ -290,9 +303,13 @@ contract FestivalNFT is
     checkTicketIsOwner(ticketId, _msgSender())
     checkTicketOnSale(ticketId)
   {
+    // Transferring of FNFT
+    transferFrom(_organiser,_msgSender(), ticketId);
+    // Setting ticket details
     _ticketDetails[ticketId].sellingPrice = 0;
     _ticketDetails[ticketId].forSale = false;
-    removeTicketOnSale(ticketId);
+
+    emit RemoveListing(_msgSender(),ticketId);
   }
 
   /*
@@ -309,6 +326,8 @@ contract FestivalNFT is
     checkTicketOnSale(ticketId)
   {
     _ticketDetails[ticketId].sellingPrice = sellingPrice_;
+
+    emit AdjustListing(_msgSender(),ticketId,sellingPrice_);
   }
 
   /*
@@ -325,8 +344,8 @@ contract FestivalNFT is
     checkTicketIsNotOwner(ticketId, _msgSender())
     checkTicketOnSale(ticketId)
   {
-    address payable seller = payable(_ticketDetails[ticketId].ticketOwner);
-    address payable buyer = payable(_msgSender());
+    address seller = _ticketDetails[ticketId].ticketOwner;
+    address buyer = _msgSender();
     uint256 sellingPrice = _ticketDetails[ticketId].sellingPrice;
     uint256 commissionPrice = (sellingPrice * commission) / 100;
     // Transferring of Tokens
@@ -335,15 +354,14 @@ contract FestivalNFT is
       _token.transferFrom(buyer, _organiser, commissionPrice);
     }
     // Transferring of NFT
-    transferFrom(seller, buyer, ticketId);
-    // Adjusting lists
-    removeTicketOnSale(ticketId);
-    removeTicketFromPurchased(seller, ticketId);
-    _purchasedTickets[buyer].push(_tokenId);
-    // Adjust ticket
-    _ticketDetails[ticketId].ticketOwner = _msgSender();
+    transferFrom(_organiser, buyer, ticketId);
+
+    // Adjust ticket details
+    _ticketDetails[ticketId].ticketOwner = buyer;
     _ticketDetails[ticketId].currentPrice = sellingPrice;
     _ticketDetails[ticketId].forSale = false;
+
+    emit PurchaseListing(buyer,seller,sellingPrice,commissionPrice);
   }
 
   //////////////////////////////////////////////////////////////////
@@ -360,50 +378,8 @@ contract FestivalNFT is
   }
 
   //////////////////////////////////////////////////////////////////
-  // Internal Functions                                           //
-  //////////////////////////////////////////////////////////////////
-
-  /*
-    Internal - Remove ticket from ticket on sale list
-  */
-
-  function removeTicketOnSale(uint256 ticketId) internal {
-    uint256 numOfTickets = ticketsOnSale.length;
-
-    for (uint256 i = 0; i < numOfTickets; i++) {
-      if (ticketsOnSale[i] == ticketId) {
-        for (uint256 j = i + 1; j < numOfTickets; j++) {
-          ticketsOnSale[j - 1] = ticketsOnSale[j];
-        }
-        ticketsOnSale.pop();
-      }
-    }
-  }
-
-  /*
-    Internal - Remove ticket from purchased list
-  */
-
-  function removeTicketFromPurchased(address person, uint256 ticketId) internal {
-    uint256 numOfTickets = _purchasedTickets[person].length;
-
-    for (uint256 i = 0; i < numOfTickets; i++) {
-      if (_purchasedTickets[person][i] == ticketId) {
-        for (uint256 j = i + 1; j < numOfTickets; j++) {
-          _purchasedTickets[person][j - 1] = _purchasedTickets[person][j];
-        }
-        _purchasedTickets[person].pop();
-      }
-    }
-  }
-
-  //////////////////////////////////////////////////////////////////
   // Getter Functions                                             //
   //////////////////////////////////////////////////////////////////
-
-  function getOwner(uint256 ticketId) public view returns (address) {
-    return _ticketDetails[ticketId].ticketOwner;
-  }
 
   function getCurrentPrice(uint256 ticketId) public view returns (uint256) {
     return _ticketDetails[ticketId].currentPrice;
@@ -417,15 +393,4 @@ contract FestivalNFT is
     return _ticketDetails[ticketId].forSale;
   }
 
-  function getTicketsOfBuyer(address buyer) public view returns (uint256[] memory) {
-    return _purchasedTickets[buyer];
-  }
-
-  function getNumTicketsOfBuyer(address buyer) public view returns(uint256) {
-    return _purchasedTickets[buyer].length;
-  }
-
-  function getTicketsOnSale() public view returns (uint256[] memory) {
-    return ticketsOnSale;
-  }
 }

@@ -164,6 +164,51 @@ describe('Festival', function () {
         ethers.utils.parseUnits('11', 18) // 11 FTK * 18 decimals
       );
     });
+
+    it('Failure listing of 1 FNFT above 110% Threshold', async function () {
+      const { organiser, buyer1, buyer2, buyer3, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
+
+      await festivalToken.mint(buyer1.address, ethers.utils.parseUnits('1', 20)); // minting 100 FTK
+
+      // Initialising public sale
+      await festivalNFT.startPublicSale();
+
+      // Approving buyer1 to transact in FTK
+      await festivalToken.connect(buyer1).approve(festivalNFT.address, festivalToken.totalSupply());
+
+      // Minting 1 FNFT at 10 FTK
+      await festivalNFT.connect(buyer1).publicMint(1);
+
+      // Listing 1 FNFT at 12 FTK
+      await expect(festivalNFT.connect(buyer1).setListing(1, ethers.utils.parseUnits('12', 18))).to.be.revertedWith(
+        'Re-selling price is more than 110%'
+      );
+    });
+
+    it('Successful Purchase listing of 1 FNFT ', async function () {
+      const { organiser, buyer1, buyer2, buyer3, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
+
+      await festivalToken.mint(buyer1.address, ethers.utils.parseUnits('1', 20)); // minting 100 FTK
+      await festivalToken.mint(buyer2.address, ethers.utils.parseUnits('1', 20)); // minting 100 FTK
+
+      // Initialising public sale
+      await festivalNFT.startPublicSale();
+
+      // Approving buyer1 and buyer2 to transact in FTK
+      await festivalToken.connect(buyer1).approve(festivalNFT.address, festivalToken.totalSupply());
+      await festivalToken.connect(buyer2).approve(festivalNFT.address, festivalToken.totalSupply());
+
+      // Minting 1 FNFT at 10 FTK
+      await festivalNFT.connect(buyer1).publicMint(1);
+
+      // Listing 1 FNFT at 11 FTK
+      await festivalNFT.connect(buyer1).setListing(1, ethers.utils.parseUnits('11', 18));
+
+      // Purchasing of 1 FNFT at 11 FTK
+      await festivalNFT.connect(buyer2).purchaseListing(1, ethers.utils.parseUnits('11', 18));
+
+      // expect(await festivalNFT.getOwner(1)).to.equal(buyer2.address);
+    });
   });
   // it('Check BluejayTokenTest Minting', async function () {
   //   const { bluejayTokenTest, oracle, vesting } = await loadFixture(
