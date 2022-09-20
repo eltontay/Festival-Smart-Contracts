@@ -2,7 +2,7 @@
 
 ## Overview
 
-> Blockchain Festival is a web-based platform powered by Settlemint for buying and reselling of festival tickets using blockchain technology. By utilising blockchain technology, numerous issues can be eliminated : Scalping , Security and Data Collection. This platform is built on the public Ethereum blockchain with 2 smart contracts utilising the latest standards, where *"FestivalNFT"* follows the ERC721 standard and *"FestivalToken"* follows the ERC20 standard.
+> Blockchain Festival is a web-based platform powered by Settlemint for buying and reselling of festival tickets using blockchain technology. By utilising blockchain technology, numerous issues can be eliminated : Scalping , Security and Data Collection. This platform is built on the public Ethereum blockchain with 2 smart contracts utilising the latest standards, where _"FestivalNFT"_ follows the ERC721 standard and _"FestivalToken"_ follows the ERC20 standard.
 
 ### Issues tackled
 
@@ -19,6 +19,7 @@
    > Data collection is an important aspect for organisers to better understand their target audience to ensure a successful launch of their festival. With blockchain technology, every transaction is tracked and monitored. This gives not just ownership of data to the organiser but also detailed insights. With these insights, organisers will be able to analyse the data and use them to achieve more successful campaigns.
 
 #
+
 ## Technical Details
 
 ### Smart Contracts
@@ -26,12 +27,13 @@
 There are 2 contracts listed under the `./contracts` directory.
 
 - **FestivalToken**
-   - ERC20 Token, named FTK, which is used to transact festival tickets (FNFT).
+  - ERC20 Token, named FTK, which is used to transact festival tickets (FNFT).
 - **FestivalNFT**
-   - ERC721 NFT, named FNFT, which is a representation of festival tickets.
-   - Takes in an ERC20 Token as a parameter for transactions of tickets. In this case, FTK.
+  - ERC721 NFT, named FNFT, which is a representation of festival tickets.
+  - Takes in an ERC20 Token as a parameter for transactions of tickets. In this case, FTK.
 
 #
+
 ## How does it work?
 
 #### Creation of FTK
@@ -54,21 +56,21 @@ There are 2 contracts listed under the `./contracts` directory.
 
 #### Listing of FNFT on Secondary Market
 
-- When listing of FNFT on the secondary market, the owner's FNFT will be transfered to the FNFT contract to act as an escrow.
+- Before listing FNFT on the secondary market, the owner has to first `approve()` to the FNFT contract to transact the FNFT on the owner's behalf using `setListing()`
 - The owner can list the selling price to no more than 110% of the previous price.
+- Depending on the commission amount set by the organiser, the FNFT's owner will receive back the selling price less the commission, upon successful sale of the FNFT.
 
 #### Adjusting listing of FNFT on Secondary Market
 
-- The owner can adjust the selling price of the listed FNFT.
+- The owner can adjust the selling price of the listed FNFT with `adjustListing()`
 
-#### Remove listing of FNFT on Secondary Market
+#### Removing listing of FNFT on Secondary Market
 
-- When removing of FNFT from the secondary market, the owner's FNFT will be transfered back from the FNFT contract to the owner.
+- The owner can remove listed FNFT with `removeListing()`
 
 #### Purchase of FNFT on the Secondary Market
 
-- When the customer wants to buy a FNFT on the secondary marketplace, the FNFT contract will first `approve()` the customer before the customer is 
-
+- A customer can purchase a FNFT using `purchaseListing()`
 
 ### Explanation through HardHat Testing
 
@@ -78,6 +80,15 @@ In your Settlemint Smart Contract Terminal run the following commands :
 
 ```bash
 npm run test
+```
+
+## Deployment
+
+Before Deployment, ensure that you have set up a private key in Settlemint.
+In your Settlemint Smart Contract Terminal run the following command :
+
+```bash
+npm run smartcontract:deploy
 ```
 
 ## More Information
