@@ -64,7 +64,7 @@ describe('Festival', function () {
 
   describe('Check Public Minting of FNFT', function () {
     it('Successful minting of 1 FNFT', async function () {
-      const { organiser, buyer1, buyer2, buyer3, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
+      const {  buyer1,festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
 
       await festivalToken.mint(buyer1.address, ethers.utils.parseUnits('1', 20)); // minting 100 FTK
 
@@ -89,7 +89,7 @@ describe('Festival', function () {
     });
 
     it('Successful minting of 5 FNFTs [limit]', async function () {
-      const { organiser, buyer1, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
+      const { buyer1, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
 
       await festivalToken.mint(buyer1.address, ethers.utils.parseUnits('1', 20)); // minting 100 FTK
 
@@ -113,7 +113,7 @@ describe('Festival', function () {
     });
 
     it('Exceeds max per transaction : 6 FNFTs [Exceed]', async function () {
-      const { organiser, buyer1, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
+      const { buyer1, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
 
       await festivalToken.mint(buyer1.address, ethers.utils.parseUnits('1', 20)); // minting 100 FTK
 
@@ -127,7 +127,7 @@ describe('Festival', function () {
     });
 
     it('Exceeds maximum public minting : 2 sets of 3 FNFTs [Exceed]', async function () {
-      const { organiser, buyer1, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
+      const { buyer1, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
 
       await festivalToken.mint(buyer1.address, ethers.utils.parseUnits('1', 20)); // minting 100 FTK
 
@@ -144,7 +144,7 @@ describe('Festival', function () {
 
   describe('Check Listing of FNFT on Secondary Marketplace', function () {
     it('Successful listing of 1 FNFT', async function () {
-      const { organiser, buyer1, buyer2, buyer3, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
+      const {buyer1, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
 
       await festivalToken.mint(buyer1.address, ethers.utils.parseUnits('1', 20)); // minting 100 FTK
 
@@ -169,7 +169,7 @@ describe('Festival', function () {
     });
 
     it('Failure listing of 1 FNFT above 110% Threshold', async function () {
-      const { organiser, buyer1, buyer2, buyer3, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
+      const { buyer1,  festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
 
       await festivalToken.mint(buyer1.address, ethers.utils.parseUnits('1', 20)); // minting 100 FTK
 
@@ -192,7 +192,7 @@ describe('Festival', function () {
     });
 
     it('Successful purchase listing of 1 FNFT ', async function () {
-      const { organiser, buyer1, buyer2, buyer3, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
+      const {  buyer1, buyer2, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
 
       await festivalToken.mint(buyer1.address, ethers.utils.parseUnits('1', 20)); // minting 100 FTK
       await festivalToken.mint(buyer2.address, ethers.utils.parseUnits('1', 20)); // minting 100 FTK
@@ -223,7 +223,7 @@ describe('Festival', function () {
 
   describe('Check Monetisation', function () {
     it('Successful monetisation - 10%', async function () {
-      const { organiser, buyer1, buyer2, buyer3, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
+      const {buyer1, buyer2, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
 
       await festivalToken.mint(buyer1.address, ethers.utils.parseUnits('1', 20)); // minting 100 FTK
       await festivalToken.mint(buyer2.address, ethers.utils.parseUnits('1', 20)); // minting 100 FTK
