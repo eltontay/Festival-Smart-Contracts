@@ -280,10 +280,10 @@ contract FestivalNFT is
     checkTicketIsOwner(ticketId, _msgSender())
     checkTicketNotOnSale(ticketId)
   {
-    // Approving organiser
-    approve(_organiser,ticketId);
-    // Transferring of FNFT
-    transferFrom(_msgSender(),_organiser, ticketId);
+    // // Approving organiser
+    // approve(_organiser,ticketId);
+    // // Transferring of FNFT
+    // transferFrom(_msgSender(),_organiser, ticketId);
     // Setting ticket details
     _ticketDetails[ticketId].sellingPrice = sellingPrice_;
     _ticketDetails[ticketId].forSale = true;
@@ -302,8 +302,8 @@ contract FestivalNFT is
     checkTicketIsOwner(ticketId, _msgSender())
     checkTicketOnSale(ticketId)
   {
-    // Transferring of FNFT
-    transferFrom(_organiser,_msgSender(), ticketId);
+    // // Transferring of FNFT
+    // transferFrom(_organiser,_msgSender(), ticketId);
     // Setting ticket details
     _ticketDetails[ticketId].sellingPrice = 0;
     _ticketDetails[ticketId].forSale = false;
@@ -343,6 +343,7 @@ contract FestivalNFT is
     checkTicketIsNotOwner(ticketId, _msgSender())
     checkTicketOnSale(ticketId)
   {
+
     address seller = _ticketDetails[ticketId].ticketOwner;
     uint256 sellingPrice = _ticketDetails[ticketId].sellingPrice;
     uint256 commissionPrice = (sellingPrice * commission) / 100;
@@ -353,7 +354,7 @@ contract FestivalNFT is
     }
 
     // Transferring of NFT
-    transferFrom(_organiser, _msgSender(), ticketId);
+    transferFrom(seller, _msgSender(), ticketId);
 
     // Adjust ticket details
     _ticketDetails[ticketId].ticketOwner = _msgSender();
