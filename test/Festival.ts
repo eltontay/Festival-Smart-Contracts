@@ -15,7 +15,12 @@ describe('Festival', function () {
 
     // Deploying Festival NFT
     const FestivalNFT = await ethers.getContractFactory('FestivalNFT');
-    const festivalNFT = await FestivalNFT.deploy('FestivalNFT', 'FNFT', 'Link to NFT image', festivalToken.address);
+    const festivalNFT = await FestivalNFT.connect(organiser).deploy(
+      'FestivalNFT',
+      'FNFT',
+      'Link to NFT image',
+      festivalToken.address
+    );
 
     return { organiser, buyer1, buyer2, buyer3, festivalToken, festivalNFT };
   }
@@ -144,7 +149,7 @@ describe('Festival', function () {
 
   describe('Check Listing of FNFT on Secondary Marketplace', function () {
     it('Successful listing of 1 FNFT', async function () {
-      const { organiser, buyer1, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
+      const { buyer1, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
 
       await festivalToken.mint(buyer1.address, ethers.utils.parseUnits('1', 20)); // minting 100 FTK
 
@@ -157,8 +162,8 @@ describe('Festival', function () {
       // Minting 1 FNFT at 10 FTK
       await festivalNFT.connect(buyer1).publicMint(1);
 
-      // Approving organiser to transfer FNFT
-      await festivalNFT.connect(buyer1).approve(organiser.address, 1);
+      // Approving smart contract to transfer FNFT
+      await festivalNFT.connect(buyer1).approve(festivalNFT.address, 1);
 
       // Listing 1 FNFT at 11 FTK
       await festivalNFT.connect(buyer1).setListing(1, ethers.utils.parseUnits('11', 18));
@@ -169,7 +174,7 @@ describe('Festival', function () {
     });
 
     it('Failure listing of 1 FNFT above 110% Threshold', async function () {
-      const { organiser, buyer1, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
+      const { buyer1, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
 
       await festivalToken.mint(buyer1.address, ethers.utils.parseUnits('1', 20)); // minting 100 FTK
 
@@ -182,8 +187,8 @@ describe('Festival', function () {
       // Minting 1 FNFT at 10 FTK
       await festivalNFT.connect(buyer1).publicMint(1);
 
-      // Approving organiser to transfer FNFT
-      await festivalNFT.connect(buyer1).approve(organiser.address, 1);
+      // Approving smart contract to transfer FNFT
+      await festivalNFT.connect(buyer1).approve(festivalNFT.address, 1);
 
       // Listing 1 FNFT at 12 FTK
       await expect(festivalNFT.connect(buyer1).setListing(1, ethers.utils.parseUnits('12', 18))).to.be.revertedWith(
@@ -192,7 +197,7 @@ describe('Festival', function () {
     });
 
     it('Successful purchase listing of 1 FNFT ', async function () {
-      const { organiser, buyer1, buyer2, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
+      const { buyer1, buyer2, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
 
       await festivalToken.mint(buyer1.address, ethers.utils.parseUnits('1', 20)); // minting 100 FTK
       await festivalToken.mint(buyer2.address, ethers.utils.parseUnits('1', 20)); // minting 100 FTK
@@ -207,14 +212,11 @@ describe('Festival', function () {
       // Minting 1 FNFT at 10 FTK
       await festivalNFT.connect(buyer1).publicMint(1);
 
-      // Approving organiser to transfer FNFT
-      await festivalNFT.connect(buyer1).approve(organiser.address, 1);
+      // Approving smart contract to transfer FNFT
+      await festivalNFT.connect(buyer1).approve(festivalNFT.address, 1);
 
       // Listing 1 FNFT at 11 FTK
       await festivalNFT.connect(buyer1).setListing(1, ethers.utils.parseUnits('11', 18));
-
-      // Approving buyer2 to purchase
-      await festivalNFT.approve(buyer2.address, 1);
 
       // Purchasing of 1 FNFT at 11 FTK
       await festivalNFT.connect(buyer2).purchaseListing(1, ethers.utils.parseUnits('11', 18));
@@ -226,7 +228,7 @@ describe('Festival', function () {
 
   describe('Check Monetisation', function () {
     it('Successful monetisation - 10%', async function () {
-      const { organiser, buyer1, buyer2, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
+      const { buyer1, buyer2, festivalToken, festivalNFT } = await loadFixture(deployLockFixture);
 
       await festivalToken.mint(buyer1.address, ethers.utils.parseUnits('1', 20)); // minting 100 FTK
       await festivalToken.mint(buyer2.address, ethers.utils.parseUnits('1', 20)); // minting 100 FTK
@@ -242,14 +244,11 @@ describe('Festival', function () {
       // Minting 1 FNFT at 10 FTK
       await festivalNFT.connect(buyer1).publicMint(1);
 
-      // Approving organiser to transfer FNFT
-      await festivalNFT.connect(buyer1).approve(organiser.address, 1);
+      // Approving smart contract to transfer FNFT
+      await festivalNFT.connect(buyer1).approve(festivalNFT.address, 1);
 
       // Listing 1 FNFT at 11 FTK
       await festivalNFT.connect(buyer1).setListing(1, ethers.utils.parseUnits('10', 18));
-
-      // Approving buyer2 to purchase
-      await festivalNFT.approve(buyer2.address, 1);
 
       // Purchasing of 1 FNFT at 10 FTK
       await festivalNFT.connect(buyer2).purchaseListing(1, ethers.utils.parseUnits('10', 18));
