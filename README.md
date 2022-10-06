@@ -2,7 +2,7 @@
 
 ## Overview
 
-> Blockchain Festival is a web-based platform powered by Settlemint for buying and reselling of festival tickets using blockchain technology. By utilising blockchain technology, numerous issues can be eliminated : Scalping , Security and Data Collection. This platform is built on the public Ethereum blockchain with 2 smart contracts utilising the latest standards, where *"FestivalNFT"* follows the ERC721 standard and *"FestivalToken"* follows the ERC20 standard.
+> Blockchain Festival is a web-based platform powered by Settlemint for buying and reselling of festival tickets using blockchain technology. By utilising blockchain technology, numerous issues can be eliminated : Scalping , Security and Data Collection. This platform is built on the public Ethereum blockchain with 2 smart contracts utilising the latest standards, where _"FestivalNFT"_ follows the ERC721 standard and _"FestivalToken"_ follows the ERC20 standard.
 
 ### Issues tackled
 
@@ -19,6 +19,7 @@
    > Data collection is an important aspect for organisers to better understand their target audience to ensure a successful launch of their festival. With blockchain technology, every transaction is tracked and monitored. This gives not just ownership of data to the organiser but also detailed insights. With these insights, organisers will be able to analyse the data and use them to achieve more successful campaigns.
 
 #
+
 ## Technical Details
 
 ### Smart Contracts
@@ -26,12 +27,31 @@
 There are 2 contracts listed under the `./contracts` directory.
 
 - **FestivalToken**
-   - ERC20 Token, named FTK, which is used to transact festival tickets (FNFT).
+  - ERC20 Token, named FTK, which is used to transact festival tickets (FNFT).
 - **FestivalNFT**
-   - ERC721 NFT, named FNFT, which is a representation of festival tickets.
-   - Takes in an ERC20 Token as a parameter for transactions of tickets. In this case, FTK.
+  - ERC721 NFT, named FNFT, which is a representation of festival tickets.
+  - Takes in an ERC20 Token as a parameter for transactions of tickets. In this case, FTK.
+
+### Deployment of Smart Contract
+
+Since the Ethereum Merge, Infura does not support Rinkeby, Kovan or Ropsten. Currently (5 October 2022), facing issue connecting to a node provided by Settlemint, hence, with respect of time, will be switching to Infura Goerli testnet for the deployment of this project.
+
+You can view the contracts here
+
+- **FestivalToken**
+
+```bash
+https://goerli.etherscan.io/token/0x32c2e50014417da4516fb78d683c574d38c0b37d
+```
+
+- **FestivalNFT**
+
+```bash
+https://goerli.etherscan.io/token/0x52e18abefb44e0ceb543ecb0935d5c42c6b2f233
+```
 
 #
+
 ## How does it work?
 
 #### Creation of FTK
@@ -67,8 +87,7 @@ There are 2 contracts listed under the `./contracts` directory.
 
 #### Purchase of FNFT on the Secondary Market
 
-- When the customer wants to buy a FNFT on the secondary marketplace, the FNFT contract will first `approve()` the customer before the customer is 
-
+- When the customer wants to buy a FNFT on the secondary marketplace, the FNFT contract will first `approve()` the customer before the customer is
 
 ### Explanation through HardHat Testing
 
