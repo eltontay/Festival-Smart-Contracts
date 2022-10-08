@@ -1,4 +1,4 @@
-# Blockchain Festival
+# Blockchain Festival (Smart Contracts)
 
 ## Overview
 
