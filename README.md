@@ -34,7 +34,7 @@ There are 2 contracts listed under the `./contracts` directory.
 
 ### Deployment of Smart Contract
 
-Since the Ethereum Merge, Infura does not support Rinkeby, Kovan or Ropsten. Currently (5 October 2022), facing issue connecting to a node provided by Settlemint, hence, with respect of time, will be switching to Infura Goerli testnet for the deployment of this project.
+Since the Ethereum Merge, Ethereum Testnet does not support Rinkeby, Kovan or Ropsten. Therefore, as of 5 October 2022, Goerli testnet will be used for the deployment of this project.
 
 You can view the contracts here
 
@@ -100,7 +100,17 @@ In your Settlemint Smart Contract Terminal run the following commands :
 npm run test
 ```
 
-## Deployment
+## Deployment on Remix IDE
+
+1. Open up https://remix.ethereum.org
+2. -connect to localhost-
+3. run `remixd -s ~/directory-of-files
+4. compile using solidity version 0.8.9
+5. change environment injected provider
+6. deploy FestivalToken smart contract
+7. deploy FestivalNFT smart contract 
+
+## Deployment on Settlemint
 
 Before Deployment, ensure that you have set up a private key in Settlemint.
 In your Settlemint Smart Contract Terminal run the following command :
@@ -108,10 +118,3 @@ In your Settlemint Smart Contract Terminal run the following command :
 ```bash
 npm run smartcontract:deploy
 ```
-
-## More Information
-
-- [Leverage the Graph Middleware to index on chain data](./docs/graph-middleware.md)
-- [Collaborate with your colleagues over GitHub](./docs/collaborate-over-github.md)
-- [Learn about the different tasks available for development](./docs/development-tasks.md)
-- [What all the folders and files in this set are for](./docs/project-structure.md)
